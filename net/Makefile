@@ -6,7 +6,7 @@
 # Rewritten to use lists instead of if-statements.
 #
 
-obj-y				:= devres.o socket.o core/
+obj-y				:= devres.o socket.o flow_analysis_tracing.o core/
 
 obj-$(CONFIG_COMPAT)		+= compat.o
 

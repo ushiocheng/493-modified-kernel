@@ -154,6 +154,7 @@
 #include <linux/once_lite.h>
 #include <net/netdev_rx_queue.h>
 
+#include <linux/flow_analysis_tracing.h>
 #include "dev.h"
 #include "net-sysfs.h"
 
@@ -3570,6 +3571,8 @@ static int xmit_one(struct sk_buff *skb, struct net_device *dev,
 
 	len = skb->len;
 	trace_net_dev_start_xmit(skb, dev);
+	// TODO: LOI
+	net_dev_xmit_hook(skb);
 	rc = netdev_start_xmit(skb, dev, txq, more);
 	trace_net_dev_xmit(skb, rc, dev, len);
 
@@ -5807,6 +5810,8 @@ int netif_receive_skb(struct sk_buff *skb)
 	int ret;
 
 	trace_netif_receive_skb_entry(skb);
+	// TODO: LOI
+	netif_receive_skb_hook(skb);
 
 	ret = netif_receive_skb_internal(skb);
 	trace_netif_receive_skb_exit(ret);

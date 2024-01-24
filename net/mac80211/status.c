@@ -1159,7 +1159,33 @@ void ieee80211_tx_status_ext(struct ieee80211_hw *hw,
 
 			if (acked) {
 				sta->deflink.status_stats.last_ack = jiffies;
+				
+				// struct file *file;
+				// loff_t pos = 0;
+				// mm_segment_t old_fs;
+				// int ret;
+				// old_fs = get_fs();
+				// set_fs(KERNEL_DS);
+				// file = filp_open("/tmp/ieee80211_ack_dump.log", O_WRONLY|O_CREAT, 0644);
+				// if (IS_ERR(file)) {
+				// 	printk(KERN_INFO "Error opening file\n");
+				// } else {
+				// 	char buf[256];
 
+				// 	snprintf(buf, sizeof(buf), "Timestamp: %lu, ACK packet content: %s\n", jiffies, skb->data);
+				// 	ret = vfs_write(file, buf, strlen(buf), &pos);
+
+				// 	if (ret < 0)
+				// 		printk(KERN_INFO "Error writing to file\n");
+
+				// 	filp_close(file, NULL);
+				// }
+
+				// set_fs(old_fs);
+
+    			// Log the timestamp and the ack packet content
+    			printk(KERN_INFO "Timestamp: %lu, ACK packet content: %s\n", jiffies, skb->data);
+	
 				if (sta->deflink.status_stats.lost_packets)
 					sta->deflink.status_stats.lost_packets = 0;
 
@@ -1252,10 +1278,15 @@ void ieee80211_report_low_ack(struct ieee80211_sta *pubsta, u32 num_packets)
 }
 EXPORT_SYMBOL(ieee80211_report_low_ack);
 
+#include <linux/flow_analysis_tracing.h>
+
 void ieee80211_free_txskb(struct ieee80211_hw *hw, struct sk_buff *skb)
 {
 	struct ieee80211_local *local = hw_to_local(hw);
 	ktime_t kt = ktime_set(0, 0);
+	// TODO: LOI
+	ieee80211_ack_hook(skb);
+	printk("[DEBUG] %lu ieee80211_free_txskb(%p, %p)", jiffies, hw, skb);
 
 	ieee80211_report_used_skb(local, skb, true, kt);
 	dev_kfree_skb_any(skb);
