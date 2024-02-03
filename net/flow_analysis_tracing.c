@@ -139,6 +139,7 @@ EXPORT_SYMBOL(netif_receive_skb_hook);
 */
 void ieee80211_xmit_hook(struct sk_buff *skb)
 {
+	printk(KERN_DEBUG "ieee80211_xmit_hook(%p)\n", skb);
 	// Find packet in matching table
 	for (int i = 0; i < matchingTableEntryUsed; i++) {
 		if (matchingTable[i].skb == skb) {
@@ -165,6 +166,7 @@ EXPORT_SYMBOL(ieee80211_xmit_hook);
  */
 void net_dev_xmit_hook(struct sk_buff *skb)
 {
+	printk(KERN_DEBUG "net_dev_xmit_hook(%p)\n", skb);
 	// Find packet in matching table
 	for (int i = 0; i < matchingTableEntryUsed; i++) {
 		if (matchingTable[i].skb == skb) {
@@ -197,6 +199,7 @@ EXPORT_SYMBOL(net_dev_xmit_hook);
 */
 void ieee80211_ack_hook(struct sk_buff *skb)
 {
+	printk(KERN_DEBUG "ieee80211_ack_hook(%p)\n", skb);
 	// Find packet in matching table
 	for (int i = 0; i < matchingTableEntryUsed; i++) {
 		if (matchingTable[i].skb == skb) {
