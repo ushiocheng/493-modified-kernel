@@ -47,7 +47,7 @@ void packetDataBufferAdd(struct PacketData *packetData)
     packetDataRingBuffer[packetDataRingBufferHead] = packetData;
     packetDataRingBufferHead = (packetDataRingBufferHead + 1) % 1024;
     numPacketCaptured++;
-	printk(KERN_DEBUG "time %lu; captured %llu packets\n", ktime_get_ns(), numPacketCaptured);
+	printk(KERN_DEBUG "time %llu; captured %llu packets\n", ktime_get_ns(), numPacketCaptured);
 }
 
 bool initialized = false;
