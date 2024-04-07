@@ -34,48 +34,28 @@ struct MatchingTableEntry {
 
 unsigned int matchingTableEntryUsed = 0;
 struct MatchingTableEntry matchingTable[128];
-struct PacketDataCLL {
-	struct PacketData packetDataEntryPtr[256];
-	unsigned int numUsed;
-	struct PacketDataCLL *next;
-};
-struct PacketDataCLL *packetDataCLLHead = NULL;
 
-void packetDataCLLAdd(struct PacketData *packetDataEntryPtr)
+struct PacketData* packetDataRingBuffer[1024];
+int packetDataRingBufferHead = 0;
+
+void packetDataBufferAdd(struct PacketData *packetData)
 {
-	struct PacketDataCLL *packetDataCLLHeadPtr = packetDataCLLHead;
-	while (true) {
-		if (packetDataCLLHeadPtr->numUsed < 256) {
-			packetDataCLLHeadPtr->packetDataEntryPtr
-				[packetDataCLLHeadPtr->numUsed] =
-				*packetDataEntryPtr;
-			packetDataCLLHeadPtr->numUsed++;
-			return;
-		}
-		if (packetDataCLLHeadPtr->next == NULL) {
-			packetDataCLLHeadPtr
-				->next = (struct PacketDataCLL *)kmalloc(
-				sizeof(struct PacketDataCLL),
-				GFP_KERNEL); // maybe do GPF_USER to make it accessible in userland?
-			packetDataCLLHeadPtr->next->numUsed = 0;
-			packetDataCLLHeadPtr->next->next = NULL;
-		}
-		packetDataCLLHeadPtr = packetDataCLLHeadPtr->next;
-	}
+    if (packetDataRingBuffer[packetDataRingBufferHead] != NULL) {
+        kfree(packetDataRingBuffer[packetDataRingBufferHead]);
+    }
+    packetDataRingBuffer[packetDataRingBufferHead] = packetData;
+    packetDataRingBufferHead = (packetDataRingBufferHead + 1) % 1024;
 }
 
 bool initialized = false;
 void initializeDataStructures(void)
 {
-	if (initialized) {
-		printk(KERN_ALERT "Unreachable: Data structures already initialized\n");
-		return;
-	}
-	packetDataCLLHead = (struct PacketDataCLL *)kmalloc(
-		sizeof(struct PacketDataCLL),
-		GFP_KERNEL); // maybe do GPF_USER to make it accessible in userland?
-	packetDataCLLHead->numUsed = 0;
-	packetDataCLLHead->next = NULL;
+    if (initialized) {
+        return;
+    }
+    for (int i = 0; i < 1024; i++) {
+        packetDataRingBuffer[i] = NULL;
+    }
 	initialized = true;
 }
 
@@ -105,7 +85,7 @@ bool isLocal(unsigned int ip)
 void netif_receive_skb_hook(struct sk_buff *skb)
 {
 	printk(KERN_DEBUG "netif_receive_skb_hook(%p)\n", skb);
-	if (!initialized) {
+	if (__builtin_expect(!initialized,0)) {
 		initializeDataStructures();
 	}
 	if (matchingTableEntryUsed >= 128) {
@@ -123,7 +103,7 @@ void netif_receive_skb_hook(struct sk_buff *skb)
 	newPacketDataEntry->flow.src_ip = _ip_hdr->saddr;
 	newPacketDataEntry->flow.dst_ip = _ip_hdr->daddr;
 	newPacketDataEntry->time_received = ktime_get_ns();
-	packetDataCLLAdd(newPacketDataEntry);
+	packetDataBufferAdd(newPacketDataEntry);
 	// insert skb addr and packet data entry ptr into matching table
 	matchingTable[matchingTableEntryUsed].skb = skb;
 	matchingTable[matchingTableEntryUsed].packetDataEntryPtr =
