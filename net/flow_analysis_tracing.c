@@ -37,6 +37,7 @@ struct MatchingTableEntry matchingTable[128];
 
 struct PacketData* packetDataRingBuffer[1024];
 int packetDataRingBufferHead = 0;
+unsigned long long int numPacketCaptured = 0;
 
 void packetDataBufferAdd(struct PacketData *packetData)
 {
@@ -45,6 +46,8 @@ void packetDataBufferAdd(struct PacketData *packetData)
     }
     packetDataRingBuffer[packetDataRingBufferHead] = packetData;
     packetDataRingBufferHead = (packetDataRingBufferHead + 1) % 1024;
+    numPacketCaptured++;
+	printk(KERN_DEBUG "time %lu; captured %llu packets\n", ktime_get_ns(), numPacketCaptured);
 }
 
 bool initialized = false;
